@@ -21,6 +21,8 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:appcompat-v7:21.0.0'
-    compile files('/home/meteor/Projects/Androidcopter/libs/joystickview.jar')
+    compile 'com.android.support:appcompat-v7:22.1.0'
+    compile 'com.android.support:cardview-v7:22.1.0'
+    compile files('./libs/joystickview.jar')
+    compile 'com.h6ah4i.android.widget.verticalseekbar:verticalseekbar:0.5.1'
 }

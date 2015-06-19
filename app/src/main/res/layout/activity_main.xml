@@ -1,43 +1,104 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".MainActivity">
-
-    <SeekBar
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:id="@+id/seekBar"
-        android:max="50"
-        android:progress="0"
-        android:rotation="270"
-        android:layout_marginLeft="-50dp"
-        android:layout_marginTop="100dp" />
-
-    <NumberPicker
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/numberPicker"
-        android:layout_marginTop="50dp"
-        android:layout_marginLeft="70dp"/>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="take off"
         android:id="@+id/button"
-        android:layout_marginBottom="28dp"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:onClick="takeOffButtonHandler" />
+        android:onClick="takeOffButtonHandler"
+        android:layout_below="@+id/joystick"
+        android:layout_centerHorizontal="true" />
 
     <com.MobileAnarchy.Android.Widgets.Joystick.JoystickView
         android:layout_width="120dp"
         android:layout_height="120dp"
         android:layout_marginEnd="42dp"
         android:layout_centerVertical="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:id="@+id/joystick" />
+
+    <com.h6ah4i.android.widget.verticalseekbar.VerticalSeekBarWrapper
+        android:layout_width="wrap_content"
+        android:layout_height="150dp"
+        android:id="@+id/numberPicker2"
+        android:layout_centerVertical="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="24dp">
+        <com.h6ah4i.android.widget.verticalseekbar.VerticalSeekBar
+            android:id="@+id/seekBar"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:max="50"
+            app:seekBarRotation="CW270" /> <!-- Rotation: CW90 or CW270 -->
+    </com.h6ah4i.android.widget.verticalseekbar.VerticalSeekBarWrapper>
+
+    <NumberPicker
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/numberPicker"
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@+id/numberPicker2"
+        />
+
+    <SeekBar
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/tweakP"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:max="20"
+        android:progress="10" />
+
+    <SeekBar
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/tweakI"
+        android:layout_below="@+id/tweakP"
+        android:layout_centerHorizontal="true"
+        android:max="20"
+        android:progress="10" />
+
+    <SeekBar
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/tweakD"
+        android:layout_below="@+id/tweakI"
+        android:layout_alignStart="@+id/tweakI"
+        android:max="20"
+        android:progress="10" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="P"
+        android:id="@+id/textView"
+        android:layout_alignTop="@+id/tweakP"
+        android:layout_toStartOf="@+id/tweakP" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="I"
+        android:id="@+id/textView2"
+        android:layout_below="@+id/tweakP"
+        android:layout_alignStart="@+id/textView" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="D"
+        android:id="@+id/textView3"
+        android:layout_below="@+id/tweakI"
+        android:layout_toStartOf="@+id/tweakI" />
 
 
 </RelativeLayout>

@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -11,6 +12,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.NumberPicker;
 import android.widget.SeekBar;
+
+import com.MobileAnarchy.Android.Widgets.Joystick.JoystickMovedListener;
+import com.MobileAnarchy.Android.Widgets.Joystick.JoystickView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -24,11 +28,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends AppCompatActivity {
 
     private NumberPicker numberPicker;
     private SeekBar seekBar;
     private int thrust = 0;
+    private int angle_x, angle_y;
 
     private OutputStreamWriter writer = null;
     private InputStreamReader reader = null;
@@ -43,30 +48,72 @@ public class MainActivity extends ActionBarActivity {
     private String datahost = "140.112.18.210";
     private int port = 12345;
 
+    private JoystickMovedListener jsListener;
+
     private void set_thrust(int value) {
         if(thrust == value) return;
         thrust = value;
         if(started) {
-            socketHandler.post( new DataSender(dataToString()) );
+            socketHandler.post( new DataSender(thrustToString()) );
         }
     }
 
-    private String dataToString() {
+    private void set_angle(int ax, int ay) {
+        if(!(ax == 0 && ay == 0)) {
+            if (Math.abs(ax - angle_x) + Math.abs(ay - angle_y) <= 3)
+                return;
+        }
+
+        angle_x = ax; angle_y = ay;
+        Log.d("set_angle", "" + angle_x + "," + angle_y);
+        if(started) {
+            socketHandler.post( new DataSender(angleToString()) );
+        }
+    }
+
+    private void set_tweak(String type, double per) {
         JSONObject json = new JSONObject();
         try {
-            json.put("action", "M");
+            json.put("action", "tweak" + type);
+            JSONArray jarr = new JSONArray();
+            jarr.put(per);
+            json.put("args", jarr);
+        } catch(JSONException e) {
+            Log.d("dataToString", "Json encode failed.");
+        }
+        Log.d("set_tweak", json.toString());
+        if(started) {
+            socketHandler.post( new DataSender(json.toString()) );
+        }
+    }
+
+    private String thrustToString() {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("action", "thrust");
             JSONArray jarr = new JSONArray();
             if (thrust > 0) {
                 jarr.put(thrust * 10);
-                jarr.put(thrust * 10);
-                jarr.put(thrust * 10);
-                jarr.put(thrust * 10);
             } else {
                 jarr.put(-500);
-                jarr.put(-500);
-                jarr.put(-500);
-                jarr.put(-500);
             }
+            json.put("args", jarr);
+        } catch(JSONException e) {
+            Log.d("dataToString", "Json encode failed.");
+        }
+        return json.toString();
+    }
+
+    private String angleToString() {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("action", "angle");
+            JSONArray jarr = new JSONArray();
+            double tx, ty;
+            tx = 1.0 * angle_x * Math.PI / 180.0;
+            ty = 1.0 * angle_y * Math.PI / 180.0;
+            jarr.put(tx);
+            jarr.put(ty);
             json.put("args", jarr);
         } catch(JSONException e) {
             Log.d("dataToString", "Json encode failed.");
@@ -124,6 +171,20 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
+        jsListener = new JoystickMovedListener() {
+            @Override
+            public void OnMoved(int pan, int tilt) {
+                MainActivity.this.set_angle(tilt, pan);
+            }
+
+            @Override
+            public void OnReleased() {
+                set_angle(0, 0);
+            }
+        };
+        JoystickView jsView = (JoystickView) findViewById(R.id.joystick);
+        jsView.setOnJostickMovedListener(jsListener);
+
         seekBar = (SeekBar) findViewById(R.id.seekBar);
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -141,6 +202,42 @@ public class MainActivity extends ActionBarActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {
 
             }
+        });
+
+        SeekBar tweakP = (SeekBar) findViewById(R.id.tweakP);
+        tweakP.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                MainActivity.this.set_tweak("P", progress/10.0);
+            }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {  }
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {  }
+        });
+
+        SeekBar tweakI = (SeekBar) findViewById(R.id.tweakI);
+        tweakI.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                MainActivity.this.set_tweak("I", progress/10.0);
+            }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {  }
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {  }
+        });
+
+        SeekBar tweakD = (SeekBar) findViewById(R.id.tweakD);
+        tweakD.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                MainActivity.this.set_tweak("D", progress/10.0);
+            }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {  }
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {  }
         });
 
         socketHandler.post(starter);
