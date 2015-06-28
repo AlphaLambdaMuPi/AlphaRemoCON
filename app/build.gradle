@@ -25,4 +25,5 @@ dependencies {
     compile 'com.android.support:cardview-v7:22.1.0'
     compile files('./libs/joystickview.jar')
     compile 'com.h6ah4i.android.widget.verticalseekbar:verticalseekbar:0.5.1'
+    compile 'com.github.dmytrodanylyk.circular-progress-button:library:1.1.3'
 }

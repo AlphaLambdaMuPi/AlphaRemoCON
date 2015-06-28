@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.NumberPicker;
@@ -15,6 +16,7 @@ import android.widget.SeekBar;
 
 import com.MobileAnarchy.Android.Widgets.Joystick.JoystickMovedListener;
 import com.MobileAnarchy.Android.Widgets.Joystick.JoystickView;
+import com.dd.CircularProgressButton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -52,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void set_thrust(int value) {
         if(thrust == value) return;
+        if(value > thrust + 10) return;
         thrust = value;
         if(started) {
             socketHandler.post( new DataSender(thrustToString()) );
@@ -74,8 +77,9 @@ public class MainActivity extends AppCompatActivity {
     private void set_tweak(String type, double per) {
         JSONObject json = new JSONObject();
         try {
-            json.put("action", "tweak" + type);
+            json.put("action", "tweak");
             JSONArray jarr = new JSONArray();
+            jarr.put(type);
             jarr.put(per);
             json.put("args", jarr);
         } catch(JSONException e) {
@@ -125,8 +129,8 @@ public class MainActivity extends AppCompatActivity {
         if(!started) return;
         JSONObject json = new JSONObject();
         try {
-            if(!tookoff) json.put("action", "T");
-            else json.put("action", "S");
+            if(!tookoff) json.put("action", "arm");
+            else json.put("action", "stop");
             json.put("args", "");
         } catch(JSONException e) {
             Log.d("dataToString", "Json encode failed.");
@@ -166,8 +170,9 @@ public class MainActivity extends AppCompatActivity {
         numberPicker.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
             @Override
             public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
-                MainActivity.this.seekBar.setProgress(newVal);
                 MainActivity.this.set_thrust(newVal);
+                MainActivity.this.seekBar.setProgress(
+                        MainActivity.this.thrust);
             }
         });
 
@@ -189,8 +194,10 @@ public class MainActivity extends AppCompatActivity {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                MainActivity.this.numberPicker.setValue(progress);
                 MainActivity.this.set_thrust(progress);
+                MainActivity.this.numberPicker.setValue(
+                        MainActivity.this.thrust
+                );
             }
 
             @Override
@@ -239,6 +246,27 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {  }
         });
+
+        final HoldButton armButton = (HoldButton) findViewById(R.id.armButton);
+        armButton.setOnTouchListener(new View.OnTouchListener() {
+             @Override
+             public boolean onTouch(View view, MotionEvent motionEvent) {
+                 HoldButton hv = (HoldButton) view;
+                 if(motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                     int res = hv.getStateOnTouch();
+                     if(res == 2) {
+                         Log.d("Send", "test");
+                     }
+                 } else if(motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                     int res = hv.releaseTouch();
+                     if(res == 1) {
+                         Log.d("Send", "hao123");
+                     }
+                 }
+                 return true;
+             }
+         });
+        //armButton.set
 
         socketHandler.post(starter);
     }
