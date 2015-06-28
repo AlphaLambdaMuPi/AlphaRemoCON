@@ -19,6 +19,7 @@ public class JoystickView extends View {
     private final String TAG = "JoystickView";
     private Paint circlePaint;
     private Paint handlePaint;
+    private double initX, initY;
     private double touchX, touchY;
     private int innerPadding;
     private int handleRadius;
@@ -126,16 +127,21 @@ public class JoystickView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         int actionType = event.getAction();
-        if (actionType == MotionEvent.ACTION_MOVE) {
+        if (actionType == MotionEvent.ACTION_DOWN) {
+            initX = event.getX();
+            initY = event.getY();
+        } else if (actionType == MotionEvent.ACTION_MOVE) {
             int px = getMeasuredWidth() / 2;
             int py = getMeasuredHeight() / 2;
             int radius = Math.min(px, py) - handleInnerBoundaries;
 
-            touchX = (event.getX() - px);
-            touchX = Math.max(Math.min(touchX, radius), -radius);
-
-            touchY = (event.getY() - py);
-            touchY = Math.max(Math.min(touchY, radius), -radius);
+            touchX = (event.getX() - initX);
+            touchY = (event.getY() - initY);
+            double rd = Math.sqrt((touchX * touchX) + (touchY * touchY));
+            if(rd > radius) {
+                touchX *= radius / rd;
+                touchY *= radius / rd;
+            }
 
             // Pressure
             if (listener != null) {
