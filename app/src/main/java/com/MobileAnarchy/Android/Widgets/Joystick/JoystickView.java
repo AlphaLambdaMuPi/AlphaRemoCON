@@ -26,6 +26,7 @@ public class JoystickView extends View {
     private int handleInnerBoundaries;
     private JoystickMovedListener listener;
     private int sensitivity;
+    private boolean rectangleArea = false;
 
     // =========================================
     // Constructors
@@ -64,7 +65,7 @@ public class JoystickView extends View {
         handlePaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
         innerPadding = 10;
-        sensitivity = 10;
+        sensitivity = 1;
     }
 
     // =========================================
@@ -73,6 +74,10 @@ public class JoystickView extends View {
 
     public void setOnJostickMovedListener(JoystickMovedListener listener) {
         this.listener = listener;
+    }
+
+    public void setRectangleAreaFlag(boolean flag) {
+        rectangleArea = flag;
     }
 
     // =========================================
@@ -137,15 +142,20 @@ public class JoystickView extends View {
 
             touchX = (event.getX() - initX);
             touchY = (event.getY() - initY);
-            double rd = Math.sqrt((touchX * touchX) + (touchY * touchY));
-            if(rd > radius) {
-                touchX *= radius / rd;
-                touchY *= radius / rd;
+            if(rectangleArea) {
+                touchX = Math.max(Math.min(touchX, radius), -radius);
+                touchY = Math.max(Math.min(touchY, radius), -radius);
+            } else {
+                double rd = Math.sqrt((touchX * touchX) + (touchY * touchY));
+                if (rd > radius) {
+                    touchX *= radius / rd;
+                    touchY *= radius / rd;
+                }
             }
 
             // Pressure
             if (listener != null) {
-                listener.OnMoved((int) (touchX / radius * sensitivity), (int) (touchY  / radius * sensitivity));
+                listener.OnMoved((touchX / radius * sensitivity), (touchY / radius * sensitivity));
             }
 
             invalidate();

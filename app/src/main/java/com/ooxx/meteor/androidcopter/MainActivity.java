@@ -17,6 +17,7 @@ import android.widget.SeekBar;
 import com.MobileAnarchy.Android.Widgets.Joystick.JoystickMovedListener;
 import com.MobileAnarchy.Android.Widgets.Joystick.JoystickView;
 import com.dd.CircularProgressButton;
+import com.getbase.floatingactionbutton.FloatingActionButton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,14 +29,16 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class MainActivity extends AppCompatActivity {
 
     private NumberPicker numberPicker;
     private SeekBar seekBar;
-    private int thrust = 0;
-    private int angle_x, angle_y;
+    private double thrust = 0, yaw = 0;
+    private double angle_x, angle_y;
 
     private OutputStreamWriter writer = null;
     private InputStreamReader reader = null;
@@ -47,30 +50,42 @@ public class MainActivity extends AppCompatActivity {
     private boolean connected = false;
     private boolean started = false;
 
-    private String datahost = "140.112.18.210";
-    private int port = 12345;
+    private String datahost = "1.34.79.9";
+    private int port = 3333;
 
-    private JoystickMovedListener jsListener;
+    private JoystickMovedListener jsListenerL, jsListenerR;
 
-    private void set_thrust(int value) {
-        if(thrust == value) return;
-        if(value > thrust + 10) return;
-        thrust = value;
-        if(started) {
-            socketHandler.post( new DataSender(thrustToString()) );
-        }
-    }
+    private Timer reconnectTimer;
 
-    private void set_angle(int ax, int ay) {
-        if(!(ax == 0 && ay == 0)) {
-            if (Math.abs(ax - angle_x) + Math.abs(ay - angle_y) <= 3)
+    private void setAngle(double ax, double ay) {
+        double r = Math.sqrt((ax * ax) + (ay * ay));
+        double dis = Math.sqrt((ax - angle_x) * (ax - angle_x) +
+                (ay - angle_y) * (ay - angle_y));
+        if(r > 0.2) {
+            if (dis < 0.1)
                 return;
         }
 
         angle_x = ax; angle_y = ay;
         Log.d("set_angle", "" + angle_x + "," + angle_y);
         if(started) {
-            socketHandler.post( new DataSender(angleToString()) );
+            socketHandler.post( new DataSender(controlToString()) );
+        }
+    }
+
+    private void setThrustAndYaw(double th, double ya) {
+        double r = Math.sqrt((th * th) + (ya * ya));
+        double dis = Math.sqrt((th - thrust) * (th - thrust) +
+                (ya - yaw) * (ya - yaw));
+        if(r > 0.2) {
+            if (dis < 0.1)
+                return;
+        }
+
+        thrust = th; yaw = ya;
+        Log.d("set_t&y", "" + thrust + "," + yaw);
+        if(started) {
+            socketHandler.post( new DataSender(controlToString()) );
         }
     }
 
@@ -91,16 +106,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private String thrustToString() {
+    private String controlToString() {
         JSONObject json = new JSONObject();
         try {
-            json.put("action", "thrust");
+            json.put("action", "control");
             JSONArray jarr = new JSONArray();
-            if (thrust > 0) {
-                jarr.put(thrust * 10);
-            } else {
-                jarr.put(-500);
-            }
+            jarr.put(thrust);
+            jarr.put(angle_x);
+            jarr.put(angle_y);
+            jarr.put(yaw);
             json.put("args", jarr);
         } catch(JSONException e) {
             Log.d("dataToString", "Json encode failed.");
@@ -108,39 +122,15 @@ public class MainActivity extends AppCompatActivity {
         return json.toString();
     }
 
-    private String angleToString() {
+    private String singleActionToString(String s) {
         JSONObject json = new JSONObject();
         try {
-            json.put("action", "angle");
-            JSONArray jarr = new JSONArray();
-            double tx, ty;
-            tx = 1.0 * angle_x * Math.PI / 180.0;
-            ty = 1.0 * angle_y * Math.PI / 180.0;
-            jarr.put(tx);
-            jarr.put(ty);
-            json.put("args", jarr);
-        } catch(JSONException e) {
-            Log.d("dataToString", "Json encode failed.");
-        }
-        return json.toString();
-    }
-
-    public void takeOffButtonHandler(View view) {
-        if(!started) return;
-        JSONObject json = new JSONObject();
-        try {
-            if(!tookoff) json.put("action", "arm");
-            else json.put("action", "stop");
+            json.put("action", s);
             json.put("args", "");
         } catch(JSONException e) {
             Log.d("dataToString", "Json encode failed.");
         }
-        socketHandler.post( new DataSender(json.toString()) );
-        if(!tookoff) {
-            Button button = (Button) view;
-            button.setText("Land");
-            tookoff = true;
-        }
+        return json.toString();
     }
 
     @Override
@@ -152,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
         socketThread.start();
         socketHandler = new Handler(socketThread.getLooper());
 
+        /*
         numberPicker = (NumberPicker) findViewById(
                 R.id.numberPicker
         );
@@ -175,21 +166,9 @@ public class MainActivity extends AppCompatActivity {
                         MainActivity.this.thrust);
             }
         });
+        */
 
-        jsListener = new JoystickMovedListener() {
-            @Override
-            public void OnMoved(int pan, int tilt) {
-                MainActivity.this.set_angle(tilt, pan);
-            }
-
-            @Override
-            public void OnReleased() {
-                set_angle(0, 0);
-            }
-        };
-        JoystickView jsView = (JoystickView) findViewById(R.id.joystick);
-        jsView.setOnJostickMovedListener(jsListener);
-
+        /*
         seekBar = (SeekBar) findViewById(R.id.seekBar);
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -209,7 +188,38 @@ public class MainActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {
 
             }
-        });
+        });*/
+
+
+        jsListenerL = new JoystickMovedListener() {
+            @Override
+            public void OnMoved(double pan, double tilt) {
+                setThrustAndYaw(tilt, pan);
+            }
+
+            @Override
+            public void OnReleased() {
+                setThrustAndYaw(0, 0);
+            }
+        };
+        JoystickView jsViewL = (JoystickView) findViewById(R.id.joystickL);
+        jsViewL.setRectangleAreaFlag(true);
+        jsViewL.setOnJostickMovedListener(jsListenerL);
+
+        jsListenerR = new JoystickMovedListener() {
+            @Override
+            public void OnMoved(double pan, double tilt) {
+                setAngle(tilt, pan);
+            }
+
+            @Override
+            public void OnReleased() {
+                setAngle(0, 0);
+            }
+        };
+        JoystickView jsViewR = (JoystickView) findViewById(R.id.joystickR);
+        jsViewR.setOnJostickMovedListener(jsListenerR);
+
 
         SeekBar tweakP = (SeekBar) findViewById(R.id.tweakP);
         tweakP.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -239,38 +249,68 @@ public class MainActivity extends AppCompatActivity {
         tweakD.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                MainActivity.this.set_tweak("D", progress/10.0);
+                MainActivity.this.set_tweak("D", progress / 10.0);
             }
+
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {  }
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {  }
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+
+        FloatingActionButton emergeButton = (FloatingActionButton) findViewById(R.id.emergeButton);
+        emergeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                socketHandler.post( new DataSender(singleActionToString("stop")) );
+                Log.d("Send", "stop");
+            }
         });
 
         final HoldButton armButton = (HoldButton) findViewById(R.id.armButton);
         armButton.setOnTouchListener(new View.OnTouchListener() {
-             @Override
-             public boolean onTouch(View view, MotionEvent motionEvent) {
-                 HoldButton hv = (HoldButton) view;
-                 if(motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-                     int res = hv.getStateOnTouch();
-                     if(res == 2) {
-                         Log.d("Send", "test");
-                     }
-                 } else if(motionEvent.getAction() == MotionEvent.ACTION_UP) {
-                     int res = hv.releaseTouch();
-                     if(res == 1) {
-                         Log.d("Send", "hao123");
-                     }
-                 }
-                 return true;
-             }
-         });
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                HoldButton hv = (HoldButton) view;
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                    int res = hv.getStateOnTouch();
+                    if (res == 2) {
+                        socketHandler.post(new DataSender(singleActionToString("disarm")));
+                        Log.d("Send", "disarm");
+                    }
+                } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                    int res = hv.releaseTouch();
+                    if (res == 1) {
+                        if (started) {
+                            socketHandler.post(new DataSender(singleActionToString("arm")));
+                            Log.d("Send", "arm");
+                        }
+                    }
+                }
+                return true;
+            }
+        });
         //armButton.set
 
-        socketHandler.post(starter);
+        startConnection();
     }
 
+    private void startConnection() {
+        if(reconnectTimer == null)
+            reconnectTimer = new Timer();
+        else return;
+        reconnectTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if(!connected) {
+                    socketHandler.post(starter);
+                }
+            }
+        }, 0, 1000);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -332,8 +372,7 @@ public class MainActivity extends AppCompatActivity {
             }
             catch (IOException e) {
                 Log.d("DEBUG", "socket write error");
-                if (socket.isInputShutdown())
-                    socketHandler.post(stopper);
+                connected = started = false;
             }
         }
     };
@@ -357,6 +396,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("DEBUG", "socket was already closed");
             }
             socket = null;
+            connected = false;
         }
     };
 
@@ -370,14 +410,14 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             if (socket == null || socket.isClosed() || !started)
                 return;
+            Log.d("final send", data);
 
             try {
                 writer.write(data + "\n");
                 writer.flush();
             } catch (IOException e) {
                 Log.d("DEBUG", "socket write error");
-                if (socket.isInputShutdown())
-                    socketHandler.post(stopper);
+                connected = started = false;
             }
         }
 

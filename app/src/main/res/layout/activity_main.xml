@@ -1,6 +1,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
     android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
@@ -16,8 +17,8 @@
         app:cpb_textError="Error"
         app:cpb_textIdle="Arm"
         app:cpb_cornerRadius="24dp"
-        android:layout_below="@+id/joystick"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerVertical="true"
+        android:layout_alignStart="@+id/tweakD" />
 
     <com.MobileAnarchy.Android.Widgets.Joystick.JoystickView
         android:layout_width="120dp"
@@ -25,7 +26,14 @@
         android:layout_marginEnd="42dp"
         android:layout_centerVertical="true"
         android:layout_alignParentEnd="true"
-        android:id="@+id/joystick" />
+        android:id="@+id/joystickR" />
+
+    <com.MobileAnarchy.Android.Widgets.Joystick.JoystickView
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:id="@+id/joystickL"
+        android:layout_alignTop="@+id/joystickR"
+        android:layout_toEndOf="@+id/numberPicker2" />
 
     <com.h6ah4i.android.widget.verticalseekbar.VerticalSeekBarWrapper
         android:layout_width="wrap_content"
@@ -34,21 +42,8 @@
         android:layout_centerVertical="true"
         android:layout_alignParentStart="true"
         android:layout_marginStart="24dp">
-        <com.h6ah4i.android.widget.verticalseekbar.VerticalSeekBar
-            android:id="@+id/seekBar"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:max="50"
-            app:seekBarRotation="CW270" /> <!-- Rotation: CW90 or CW270 -->
+        <!-- Rotation: CW90 or CW270 -->
     </com.h6ah4i.android.widget.verticalseekbar.VerticalSeekBarWrapper>
-
-    <NumberPicker
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/numberPicker"
-        android:layout_centerVertical="true"
-        android:layout_toEndOf="@+id/numberPicker2"
-        />
 
     <SeekBar
         android:layout_width="150dp"
@@ -103,6 +98,16 @@
         android:id="@+id/textView3"
         android:layout_below="@+id/tweakI"
         android:layout_toStartOf="@+id/tweakI" />
+
+    <com.getbase.floatingactionbutton.FloatingActionButton
+        android:id="@+id/emergeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        fab:fab_icon="@mipmap/warn_icon"
+        fab:fab_colorNormal="@color/pink"
+        fab:fab_colorPressed="@color/pink_pressed"
+        android:layout_below="@+id/joystickL"
+        android:layout_alignParentEnd="true" />
 
 
 </RelativeLayout>

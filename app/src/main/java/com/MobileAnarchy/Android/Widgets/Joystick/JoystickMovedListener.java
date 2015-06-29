@@ -1,6 +1,6 @@
 package com.MobileAnarchy.Android.Widgets.Joystick;
 
 public interface JoystickMovedListener {
-    void OnMoved(int pan, int tilt);
+    void OnMoved(double pan, double tilt);
     void OnReleased();
 }
