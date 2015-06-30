@@ -15,10 +15,7 @@ import java.util.TimerTask;
 public class HoldButton extends CircularProgressButton {
     private boolean state = false;
     private boolean lock = false;
-    private boolean pressed = false;
     private int progress = 0;
-    private long last_holdtime = 0;
-    private int TIME_FOR_ARM = 2000;
     private Timer timer;
 
     public HoldButton(Context context) {
@@ -34,6 +31,13 @@ public class HoldButton extends CircularProgressButton {
     private void _setProgress(int a) {
         progress = a;
         setProgress(a);
+    }
+
+    public void reset() {
+        _setProgress(0);
+        state = lock = false;
+        timer.cancel();
+        timer.purge();
     }
 
     public int getStateOnTouch() {

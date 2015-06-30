@@ -109,5 +109,15 @@
         android:layout_below="@+id/joystickL"
         android:layout_alignParentEnd="true" />
 
+    <com.getbase.floatingactionbutton.FloatingActionButton
+        android:id="@+id/refreshButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        fab:fab_icon="@mipmap/refresh"
+        fab:fab_colorNormal="@color/blue"
+        fab:fab_colorPressed="@color/blue_pressed"
+        android:layout_below="@+id/joystickL"
+        android:layout_alignParentStart="true" />
+
 
 </RelativeLayout>

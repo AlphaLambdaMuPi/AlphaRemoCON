@@ -50,8 +50,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean connected = false;
     private boolean started = false;
 
-    private String datahost = "1.34.79.9";
-    private int port = 3333;
+    private String datahost = "140.112.18.210";
+    private int port = 12345;
 
     private JoystickMovedListener jsListenerL, jsListenerR;
 
@@ -194,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
         jsListenerL = new JoystickMovedListener() {
             @Override
             public void OnMoved(double pan, double tilt) {
-                setThrustAndYaw(tilt, pan);
+                setThrustAndYaw(-tilt, pan);
             }
 
             @Override
@@ -270,6 +270,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        FloatingActionButton refreshButton = (FloatingActionButton) findViewById(R.id.refreshButton);
+        refreshButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                socketHandler.post(stopper);
+                reset();
+            }
+        });
+
         final HoldButton armButton = (HoldButton) findViewById(R.id.armButton);
         armButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -296,6 +305,11 @@ public class MainActivity extends AppCompatActivity {
         //armButton.set
 
         startConnection();
+    }
+
+    public void reset() {
+        HoldButton hd = (HoldButton) findViewById(R.id.armButton);
+        hd.reset();
     }
 
     private void startConnection() {
